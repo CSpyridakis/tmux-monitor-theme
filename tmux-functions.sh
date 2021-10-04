@@ -1,4 +1,15 @@
 #!/bin/bash
+####################################################################################################################
+#   Author : Spyridakis Christos
+#   Created Date : 4/9/2021
+#   Last Updated : 4/10/2021
+#   Email : spyridakischristos@gmail.com
+#
+#
+#   Description : 
+#       Use functions that located to this file, to print important info for my custom tmux theme bar  
+#
+####################################################################################################################
 
 THEME_CLR="blue"        # colour29,
 THEME_CLR2="colour238"  # colour238, 

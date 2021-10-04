@@ -1,0 +1,131 @@
+#!/bin/bash
+
+####################################################################################################################
+#   Author : Spyridakis Christos
+#   Created Date : 4/10/2021
+#   Last Updated : 4/10/2021
+#   Email : spyridakischristos@gmail.com
+#
+#
+#   Description : 
+#       Install to your HOME dir this repo's tmux theme, just by coping or linking files .tmux.conf 
+#       and .tmux-functions.sh  
+#
+####################################################################################################################
+set -u
+# Auxiliary variables for transferring tmux files to ${HOME} dir 
+TAR_SCRIPT="`pwd`/tmux-functions.sh"
+DES_SCRIPT="$HOME/.tmux-functions.sh"
+
+TAR_TMUX="`pwd`/.tmux.conf"
+DES_TMUX="$HOME/.tmux.conf"
+
+REQ_INST=
+
+help_menu(){
+    echo "Usage: $0 [Option] [Option] "
+    echo "Install this custom made tmux theme to your system"
+    echo 
+    echo "Options:"
+    echo "  -h, --help              show this help page"
+    echo
+    echo "  -c, --copy-both         copy both needed files"
+    echo "  -l, --link-both         link both needed files"
+    echo
+    echo "  -t, --copy-tmux         only copy .tmux.conf"
+    echo "  -T, --link-tmux         only link .tmux.conf"
+    echo
+    echo "  -f, --copy-functions    only copy .tmux-functions.sh"
+    echo "  -F, --link-functions    only link .tmux-functions.sh"
+    echo
+    echo "Notes:"
+    echo "  - I suggest for a normal installation to run with parameter -c."
+    echo
+    echo "  - If you want to regularly update status bar's content then you could"
+    echo "    copy .tmux.conf file and link .tmux-functions.sh with the one you"
+    echo "    have in your version control repo (in that case run -t -F)."
+}
+
+
+
+# Install needed applications if not already been installed
+install_requirements(){ 
+    [ -z ${REQ_INST} ] && sudo apt-get install tmux dc bc psensor
+    REQ_INST="DONE" 
+}
+
+# If tmux files already exist, create a copy of them
+bu_tmux(){ 
+    [ -e ${DES_TMUX} ] && mv ${DES_TMUX} ${DES_TMUX}.`date '+%d.%m.%Y_T%H-M%M-S%S'`.bu 
+}
+
+bu_functions(){ 
+    [ -e ${DES_SCRIPT} ] && mv ${DES_SCRIPT} ${DES_SCRIPT}.`date '+%d.%m.%Y_T%H-M%M-S%S'`.bu 
+}
+
+bu_files(){
+    bu_tmux
+    bu_functions
+}
+
+# ----
+
+copy_tmux(){ 
+    cp ${TAR_TMUX} ${DES_TMUX} && echo "Copy .tmux.conf file..." 
+}
+
+copy_functions(){ 
+    cp ${TAR_SCRIPT} ${DES_SCRIPT} && echo "Copy .tmux-functions.sh file..." 
+}
+
+copy_files(){
+    copy_tmux
+    copy_functions 
+}
+
+# ----
+
+link_tmux(){ 
+    [ ! -e ${DES_TMUX} ] && (echo -e "\nln -s ${TAR_TMUX} ${DES_TMUX}" && ln -s ${TAR_TMUX} ${DES_TMUX} && echo "Create symlink for .tmux.conf") 
+}
+
+link_functions(){ 
+    [ ! -e ${DES_SCRIPT} ] && (echo -e "\nln -s ${TAR_SCRIPT} ${DES_SCRIPT}" && ln -s ${TAR_SCRIPT} ${DES_SCRIPT} && echo "Create symlink for .tmux-functions.sh") 
+}
+
+link_files(){
+    link_tmux
+    link_functions  
+}
+
+#MAIN
+while :
+do
+    case "$1" in
+        -c | --copy-both)       install_requirements ; bu_files ; copy_files ; shift ;;
+        -l | --link-both)       install_requirements ; bu_files ; link_files ; shift ;;
+
+        -t | --copy-tmux)       install_requirements ; bu_tmux ; copy_tmux ; shift ;;
+        -T | --link-tmux)       install_requirements ; bu_tmux ; link_tmux ; shift ;;
+
+        -f | --copy-functions)  install_requirements ; bu_functions ; copy_functions ; shift ;;
+        -F | --link-functions)  install_requirements ; bu_functions ; link_functions ; shift ;;
+        
+        -h | --help)            help_menu  ; exit 0 ;;
+        
+
+        --*)
+            echo "Unknown option: $1" >&2
+            helpMenu
+            exit 1
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            helpMenu
+            exit 1 
+            ;;
+        *) 
+            break
+    esac
+done
+
