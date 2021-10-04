@@ -1,9 +1,7 @@
-# tmux-monitor-theme
+# tmux-monitor-theme ![MIT license](https://img.shields.io/github/license/CSpyridakis/tmux-monitor-theme.svg?style=plastic) ![Size](https://img.shields.io/github/repo-size/CSpyridakis/tmux-monitor-theme.svg?style=plastic)
+
 
 This repo contains a useful - despite its minimalism - tmux theme.
-
-
-# SCTT ![MIT license](https://img.shields.io/github/license/CSpyridakis/tmux-monitor-theme.svg?style=plastic) ![Size](https://img.shields.io/github/repo-size/CSpyridakis/tmux-monitor-theme.svg?style=plastic)
 
 Theme's screenshot
 
