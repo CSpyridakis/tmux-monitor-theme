@@ -20,3 +20,13 @@ The status bar provides fast access to some system information. From left to rig
 * CPU temperature (use psensors)
 * CPU load
 * Current user name
+
+## IMPORTANT
+I use `zsh` with `oh-my-zsh` installed and `agnoster` theme on top of it. So if you want your terminal to look like the image above, execute first the following commands.
+```
+sudo apt-get -y install zsh
+sudo apt-get -y install fonts-powerline
+sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+chsh -s $(which zsh)  
+```
+Then change in your `~/.zshrc` the theme's name to `ZSH_THEME="agnoster"`.
