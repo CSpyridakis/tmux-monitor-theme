@@ -3,7 +3,7 @@
 ####################################################################################################################
 #   Author : Spyridakis Christos
 #   Created Date : 4/10/2021
-#   Last Updated : 4/10/2021
+#   Last Updated : 11/10/2021
 #   Email : spyridakischristos@gmail.com
 #
 #
@@ -12,7 +12,7 @@
 #       and .tmux-functions.sh  
 #
 ####################################################################################################################
-set -u
+
 # Auxiliary variables for transferring tmux files to ${HOME} dir 
 TAR_SCRIPT="`pwd`/tmux-functions.sh"
 DES_SCRIPT="$HOME/.tmux-functions.sh"
@@ -20,14 +20,14 @@ DES_SCRIPT="$HOME/.tmux-functions.sh"
 TAR_TMUX="`pwd`/.tmux.conf"
 DES_TMUX="$HOME/.tmux.conf"
 
-REQ_INST=
-
 help_menu(){
     echo "Usage: $0 [Option] [Option] "
     echo "Install this custom made tmux theme to your system"
     echo 
     echo "Options:"
     echo "  -h, --help              show this help page"
+    echo
+    echo "  -r, --requirements      install requirements"
     echo
     echo "  -c, --copy-both         copy both needed files"
     echo "  -l, --link-both         link both needed files"
@@ -47,12 +47,12 @@ help_menu(){
 }
 
 
-
 # Install needed applications if not already been installed
 install_requirements(){ 
-    [ -z ${REQ_INST} ] && sudo apt-get install tmux dc bc psensor
-    REQ_INST="DONE" 
+    sudo apt-get install tmux dc bc psensor
 }
+
+# ----
 
 # If tmux files already exist, create a copy of them
 bu_tmux(){ 
@@ -102,18 +102,19 @@ link_files(){
 while :
 do
     case "$1" in
-        -c | --copy-both)       install_requirements ; bu_files ; copy_files ; shift ;;
-        -l | --link-both)       install_requirements ; bu_files ; link_files ; shift ;;
+        -c | --copy-both)  bu_files ; copy_files ; shift ;;
+        -l | --link-both)  bu_files ; link_files ; shift ;;
 
-        -t | --copy-tmux)       install_requirements ; bu_tmux ; copy_tmux ; shift ;;
-        -T | --link-tmux)       install_requirements ; bu_tmux ; link_tmux ; shift ;;
+        -t | --copy-tmux)  bu_tmux ; copy_tmux ; shift ;;
+        -T | --link-tmux)  bu_tmux ; link_tmux ; shift ;;
 
-        -f | --copy-functions)  install_requirements ; bu_functions ; copy_functions ; shift ;;
-        -F | --link-functions)  install_requirements ; bu_functions ; link_functions ; shift ;;
+        -f | --copy-functions)  bu_functions ; copy_functions ; shift ;;
+        -F | --link-functions)  bu_functions ; link_functions ; shift ;;
         
+        -r | --requirements)    install_requirements  ; shift ;;
+
         -h | --help)            help_menu  ; exit 0 ;;
         
-
         --*)
             echo "Unknown option: $1" >&2
             helpMenu
