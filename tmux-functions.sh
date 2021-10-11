@@ -245,7 +245,7 @@ function right_status (){
 function middle_format_active(){
     str=""
     str+="#[fg=${MIDDLE_BAR_ACT_CLR},bg=${MIDDLE_BAR_CLR},nobold,nounderscore,noitalics]${LEFT_ARROW}"
-    str+="#[fg=${MIDDLE_BAR_ACT_FNT},bg=${MIDDLE_BAR_ACT_CLR}] #I #W "
+    str+="#[fg=${MIDDLE_BAR_ACT_FNT},bg=${MIDDLE_BAR_ACT_CLR}] #I #{?window_zoomed_flag,⩹ ,}#W#{?window_zoomed_flag, ⩺,} "
     str+="#[fg=${MIDDLE_BAR_ACT_CLR},bg=${MIDDLE_BAR_CLR},nobold,nounderscore,noitalics]${RIGHT_ARROW}"
     echo $str
 }
