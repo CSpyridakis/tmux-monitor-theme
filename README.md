@@ -22,7 +22,7 @@ The status bar provides fast access to some system information. From left to rig
 * Current user name
 
 ## IMPORTANT
-I use `zsh` with `oh-my-zsh` installed and `agnoster` theme on top of it. So if you want your terminal to look like the image above, execute first the following commands.
+I use `zsh` with `oh-my-zsh` installed and `agnoster` theme on top of it. So if you want your terminal to look like the image above run also 'INSTALL -z' or execute first the following commands.
 ```
 sudo apt-get -y install zsh
 sudo apt-get -y install fonts-powerline

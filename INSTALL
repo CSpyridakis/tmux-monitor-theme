@@ -29,6 +29,8 @@ help_menu(){
     echo
     echo "  -r, --requirements      install requirements"
     echo
+    echo "  -z, --zsh               install also zsh with agnoster theme"
+    echo
     echo "  -c, --copy-both         copy both needed files"
     echo "  -l, --link-both         link both needed files"
     echo
@@ -46,10 +48,22 @@ help_menu(){
     echo "    have in your version control repo (in that case run -t -F)."
 }
 
+# Install ZSH with agnoster theme
+install_zsh_agnoster(){
+    sudo apt-get -y install zsh
+    sudo apt-get -y install fonts-powerline
+    sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+    chsh -s $(which zsh)
+    
+    MY_THEME="agnoster"
+    MY_PLUGINS="git"
+    sed -e "s/ZSH_THEME=\"robbyrussell\"/ZSH_THEME=\"${MY_THEME}\"/g" -i ${HOME}/.zshrc
+    sed -e "s/plugins=(git)/plugins=(${MY_PLUGINS})/g" -i ${HOME}/.zshrc
+}
 
 # Install needed applications if not already been installed
 install_requirements(){ 
-    sudo apt-get install tmux dc bc psensor
+    sudo apt-get -y install tmux dc bc psensor xclip
 }
 
 # ----
@@ -112,6 +126,8 @@ do
         -F | --link-functions)  bu_functions ; link_functions ; shift ;;
         
         -r | --requirements)    install_requirements  ; shift ;;
+
+	-z | --zsh)             install_zsh_agnoster ; shift ;;
 
         -h | --help)            help_menu  ; exit 0 ;;
         
