@@ -18,11 +18,13 @@ tmux select-pane -t 0
 tmux resize-pane -L 50
 tmux send-keys "${source_develop}" C-m
 tmux send-keys 'echo "hello"'
+tmux select-pane -t 0 -T 'Pane Name'
 
 # 1
 tmux select-pane -t 1
 tmux send-keys "${source_develop}" C-m
 tmux send-keys 'echo "hi"'
+tmux select-pane -t 1 -T 'Pane name 2'
 
 
 # ========================================
