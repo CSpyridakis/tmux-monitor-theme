@@ -2,7 +2,7 @@
 ####################################################################################################################
 #   Author : Spyridakis Christos
 #   Created Date : 4/9/2021
-#   Last Updated : 4/10/2021
+#   Last Updated : 23/4/2022
 #   Email : spyridakischristos@gmail.com
 #
 #
@@ -108,6 +108,25 @@ function cpu_temp() {
     fi
 }
 
+function get_disk_space(){
+    local space="`df -h / | tr -s ' ' | tail -n 1`"
+    local free_space="`echo ${space} | cut -d' ' -f4`"
+    local total_space="`echo ${space} | cut -d' ' -f2`"
+    local percentage_used="`echo ${space} | cut -d' ' -f5`"
+
+    local percentage_used_num="`echo ${percentage_used} | tr -d '%'`"
+    local print_data="D ${free_space} [${percentage_used}] "
+    if [[ ${percentage_used_num} -lt 4 ]] ; then
+        echo "#[fg=colour196]${print_data}"
+    elif [[ ${percentage_used_num} -lt 10 ]] ; then
+        echo "#[fg=colour208]${print_data}"
+    elif [[ ${percentage_used_num} -lt 15 ]] ; then
+       echo "#[fg=colour226]${print_data}"
+    else
+        echo "#[fg=colour47]${print_data}"
+    fi
+}
+
 function get_speed(){
     local l_speed=$1
 
@@ -153,7 +172,7 @@ function net_down_traffic(){
 }
 
 function net_traffic(){
-    echo "↖ `net_up_traffic` ↘ `net_down_traffic`" 
+    echo "#[fg=colour121]↖ `net_up_traffic` ↘ `net_down_traffic`" 
 }
 
 function battery_level(){
@@ -206,7 +225,7 @@ function left_status (){
     str+=`cecho "-l" "fg=${THEME_CLR2},bg=colour235,nobold,nounderscore,noitalics" ${RIGHT_ARROW}`
 
     # Network traffic stats
-    str+=`cecho "-l" "fg=colour121,bg=colour235" "$(net_traffic)"`
+    str+=`cecho "-l" "fg=colour121,bg=colour235" "$(get_disk_space) $(net_traffic)"`
 
     #  --- SEPARATOR ---  
     str+=`cecho "-l" "fg=colour235,bg=colour235,nobold,nounderscore,noitalics" ${RIGHT_ARROW}`
