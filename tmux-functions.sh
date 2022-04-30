@@ -110,12 +110,12 @@ function cpu_temp() {
 
 function get_disk_space(){
     local space="`df -h / | tr -s ' ' | tail -n 1`"
-    local free_space="`echo ${space} | cut -d' ' -f4`"
+    local free_space="`echo ${space} | cut -d' ' -f4`"x
     local total_space="`echo ${space} | cut -d' ' -f2`"
     local percentage_used="`echo ${space} | cut -d' ' -f5`"
 
     local percentage_used_num="`echo ${percentage_used} | tr -d '%'`"
-    local print_data="D ${free_space} [${percentage_used}] "
+    local print_data="F:${free_space} [U:${percentage_used}] "
     if [[ ${percentage_used_num} -lt 4 ]] ; then
         echo "#[fg=colour196]${print_data}"
     elif [[ ${percentage_used_num} -lt 10 ]] ; then
