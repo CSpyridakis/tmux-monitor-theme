@@ -110,7 +110,7 @@ function cpu_temp() {
 
 function get_disk_space(){
     local space="`df -h / | tr -s ' ' | tail -n 1`"
-    local free_space="`echo ${space} | cut -d' ' -f4`"x
+    local free_space="`echo ${space} | cut -d' ' -f4`"
     local total_space="`echo ${space} | cut -d' ' -f2`"
     local percentage_used="`echo ${space} | cut -d' ' -f5`"
 
