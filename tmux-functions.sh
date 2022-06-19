@@ -26,6 +26,12 @@ RIGHT_ARROW=""
 LEFT_ARROW=""
 MIDDLE_DOT="•"
 
+#Change this variable if you do not want to display arrows
+USE_ARROWS=1
+if [ ${USE_ARROWS} -eq 0 ] ; then 
+    RIGHT_ARROW=""
+    LEFT_ARROW=""
+fi
 
 function setup_on_system (){ 
     TAR_SCRIPT="`pwd`/tmux-functions.sh"

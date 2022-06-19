@@ -14,6 +14,7 @@ To install it, copy `.tmux.conf` and `tmux-functions.sh` files to your `${HOME}`
 The status bar provides fast access to some system information. From left to right you will find:
 * Tmux session’s name
 * Local IP address (actually the first one that appears on `hostname -I` command)
+* Free disk space and percentage of disk already used
 * Network upload/download traffic statistics
 * Panes’ names
 * Available Ram/Total ram
