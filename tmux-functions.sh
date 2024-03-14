@@ -22,8 +22,8 @@ MIDDLE_BAR_CLR="colour235" # color235
 MIDDLE_BAR_ACT_FNT="colour222" # color222
 MIDDLE_BAR_FNT="white"     # white
 
-RIGHT_ARROW=""
-LEFT_ARROW=""
+RIGHT_ARROW="" #""
+LEFT_ARROW="" #""
 MIDDLE_DOT="•"
 
 #Change this variable if you do not want to display arrows
