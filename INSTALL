@@ -51,7 +51,15 @@ help_menu(){
 # Install ZSH with agnoster theme
 install_zsh_agnoster(){
     sudo apt-get -y install zsh
-    sudo apt-get -y install fonts-powerline
+    
+    # fonts-powerline
+    git clone https://github.com/powerline/fonts.git --depth=1
+    cd fonts
+    ./install.sh
+    cd ..
+    rm -rf fonts
+
+    # Oh-my-zsh
     sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
     chsh -s $(which zsh)
     
