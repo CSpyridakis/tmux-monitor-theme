@@ -3,36 +3,413 @@
 ####################################################################################################################
 #   Author : Spyridakis Christos
 #   Created Date : 4/10/2021
-#   Last Updated : 11/10/2021
+#   Last Updated : 3/7/2026
 #   Email : spyridakischristos@gmail.com
 #
 #
-#   Description : 
-#       Install to your HOME dir this repo's tmux theme, just by coping or linking files .tmux.conf 
-#       and .tmux-functions.sh  
+#   Description :
+#       Install to your HOME dir this repo's tmux theme, just by coping or linking files .tmux.conf
+#       and .tmux-functions.sh
 #
 ####################################################################################################################
 
-# Auxiliary variables for transferring tmux files to ${HOME} dir 
+# Auxiliary variables for transferring tmux files to ${HOME} dir
 TAR_SCRIPT="`pwd`/tmux-functions.sh"
 DES_SCRIPT="$HOME/.tmux-functions.sh"
 
 TAR_TMUX="`pwd`/.tmux.conf"
 DES_TMUX="$HOME/.tmux.conf"
 
-help_menu(){
+# Terminal formatting
+if [ -t 1 ]; then
+    C_OK="\033[0;32m"; C_WARN="\033[0;33m"; C_ERR="\033[0;31m"; C_DIM="\033[2m"; C_B="\033[1m"; C_R="\033[0m"
+else
+    C_OK=""; C_WARN=""; C_ERR=""; C_DIM=""; C_B=""; C_R=""
+fi
+
+# Requirement lists
+# Hard: theme cannot work without these
+HARD_TOOLS=(tmux bash awk grep sed tr cut head tail df)
+# Soft: theme degrades gracefully if missing (shows "--" placeholders)
+SOFT_TOOLS_COMMON=(curl)
+SOFT_LINUX=(sensors xclip free)               # cpu temp / clipboard / memory
+SOFT_MACOS=(osx-cpu-temp)                     # cpu temp only
+
+# Powerline/Nerd font — REQUIRED for status bar arrow glyphs (,).
+# Without it the terminal renders them as wide/replacement chars, wraps the
+# status line, and on macOS Terminal.app the wrap causes the status bar to
+# "stack" on top of itself over time.
+FONT_INSTALLED=0
+
+# OS + package manager detection
+function detect_os(){
+    OS_KIND="unknown"; OS_ID=""; OS_PRETTY=""; PKG_MGR=""; PKG_INSTALL=""
+    case "$(uname -s)" in
+        Darwin)
+            OS_KIND="macos"; OS_ID="macos"
+            OS_PRETTY="macOS $(sw_vers -productVersion 2>/dev/null)"
+            if command -v brew >/dev/null 2>&1; then
+                PKG_MGR="brew"; PKG_INSTALL="brew install"
+            fi
+            ;;
+        Linux)
+            OS_KIND="linux"
+            if [ -r /etc/os-release ]; then
+                # shellcheck disable=SC1091
+                . /etc/os-release
+                OS_ID="${ID:-linux}"; OS_PRETTY="${PRETTY_NAME:-Linux}"
+            else
+                OS_ID="linux"; OS_PRETTY="Linux"
+            fi
+            if   command -v apt-get >/dev/null 2>&1;  then PKG_MGR="apt";    PKG_INSTALL="sudo apt-get -y install"
+            elif command -v dnf     >/dev/null 2>&1;  then PKG_MGR="dnf";    PKG_INSTALL="sudo dnf -y install"
+            elif command -v yum     >/dev/null 2>&1;  then PKG_MGR="yum";    PKG_INSTALL="sudo yum -y install"
+            elif command -v pacman  >/dev/null 2>&1;  then PKG_MGR="pacman"; PKG_INSTALL="sudo pacman -S --noconfirm"
+            elif command -v zypper  >/dev/null 2>&1;  then PKG_MGR="zypper"; PKG_INSTALL="sudo zypper -n install"
+            elif command -v apk     >/dev/null 2>&1;  then PKG_MGR="apk";    PKG_INSTALL="sudo apk add"
+            fi
+            ;;
+    esac
+}
+
+# Map a generic tool name to a package name for the current package manager.
+function pkg_name_for(){
+    local tool="$1"
+    case "$PKG_MGR:$tool" in
+        apt:sensors)    echo "lm-sensors" ;;
+        dnf:sensors|yum:sensors|zypper:sensors) echo "lm_sensors" ;;
+        pacman:sensors) echo "lm_sensors" ;;
+        apk:sensors)    echo "lm-sensors" ;;
+        brew:sensors)   echo "" ;;  # no equivalent on macOS
+        *:free)         echo "procps" ;;   # rare distros where free is missing
+        brew:osx-cpu-temp) echo "osx-cpu-temp" ;;
+        *)              echo "$tool" ;;
+    esac
+}
+
+# Detect if any Powerline/Nerd-compatible font is installed on this system.
+# Returns 0 if found, 1 if missing. Uses fc-list where available; falls back
+# to scanning the mac Font directories.
+function check_powerline_font(){
+    # Preferred: fontconfig (Linux, and mac if user installed fontconfig).
+    if command -v fc-list >/dev/null 2>&1; then
+        if fc-list 2>/dev/null | grep -qiE 'powerline|nerd font|meslo lg'; then
+            return 0
+        fi
+        return 1
+    fi
+    # macOS fallback: scan Font dirs directly.
+    if [ "$OS_KIND" = "macos" ]; then
+        if ls "$HOME/Library/Fonts" /Library/Fonts /System/Library/Fonts 2>/dev/null \
+            | grep -qiE 'powerline|nerd|meslo'; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+# Install a Powerline/Nerd font using the platform package manager, else
+# fall back to cloning powerline/fonts and running its installer.
+function install_powerline_font(){
+    case "$PKG_MGR" in
+        apt)     sudo apt-get -y install fonts-powerline ;;
+        dnf|yum) $PKG_INSTALL powerline-fonts ;;
+        pacman)  $PKG_INSTALL powerline-fonts ;;
+        zypper)  $PKG_INSTALL powerline-fonts ;;
+        apk)     $PKG_INSTALL font-powerline-symbols 2>/dev/null || _install_font_from_git ;;
+        brew)
+            # brew casks host font formulae directly since 2024 (no tap needed).
+            brew install --cask font-meslo-lg-nerd-font || \
+            brew install --cask font-hack-nerd-font
+            echo -e "${C_WARN}macOS: set your terminal font to 'MesloLGS NF' (or another Nerd Font) in Terminal/iTerm preferences.${C_R}"
+            ;;
+        *)       _install_font_from_git ;;
+    esac
+}
+
+# Fallback: clone powerline/fonts and run its installer (Linux only; macOS
+# needs the cask so terminal apps pick it up).
+function _install_font_from_git(){
+    if [ "$OS_KIND" = "macos" ]; then
+        echo -e "${C_ERR}No brew detected. Install Homebrew then re-run, or install a Nerd Font manually from https://www.nerdfonts.com/${C_R}"
+        return 1
+    fi
+    if ! command -v git >/dev/null 2>&1; then
+        echo -e "${C_ERR}git required to fetch powerline fonts. Install git first.${C_R}"
+        return 1
+    fi
+    local tmp; tmp=$(mktemp -d)
+    git clone --depth=1 https://github.com/powerline/fonts.git "$tmp/fonts" && \
+        "$tmp/fonts/install.sh" && \
+        command -v fc-cache >/dev/null 2>&1 && fc-cache -f
+    rm -rf "$tmp"
+}
+
+# Capability checks
+function check_tool(){
+    local t="$1"
+    if command -v "$t" >/dev/null 2>&1; then
+        printf "  ${C_OK}[OK]${C_R}    %-14s %s\n" "$t" "$(command -v "$t")"
+        return 0
+    else
+        return 1
+    fi
+}
+
+function check_file(){
+    local f="$1" label="$2"
+    if [ -r "$f" ] || [ -d "$f" ]; then
+        printf "  ${C_OK}[OK]${C_R}    %-22s %s\n" "$label" "$f"
+        return 0
+    else
+        printf "  ${C_ERR}[MISS]${C_R}  %-22s %s\n" "$label" "$f"
+        return 1
+    fi
+}
+
+# Perform a full capability probe. Populates:
+#   MISSING_HARD (blockers), MISSING_SOFT (optional)
+function run_check(){
+    MISSING_HARD=(); MISSING_SOFT=()
+    detect_os
+
+    # OS detected
+    echo -e "${C_B}Target device:${C_R} ${OS_PRETTY} (${OS_KIND})"
+    
+    # Package manager
+    if [ -n "$PKG_MGR" ]; then
+        echo -e "${C_B}Package manager:${C_R} ${PKG_MGR}"
+    else
+        echo -e "${C_B}Package manager:${C_R} ${C_WARN}not detected${C_R}"
+    fi
+    echo
+
+    # Hard requirements
+    echo -e "${C_B}Hard requirements:${C_R}"
+    for t in "${HARD_TOOLS[@]}"; do
+        if ! check_tool "$t"; then
+            printf "  ${C_ERR}[MISS]${C_R}  %-14s (blocker)\n" "$t"
+            MISSING_HARD+=("$t")
+        fi
+    done
+    echo
+
+    # Powerline/Nerd font — required for status bar glyphs
+    echo -e "${C_B}Powerline/Nerd font:${C_R}"
+    if check_powerline_font; then
+        printf "  ${C_OK}[OK]${C_R}    %-14s (Powerline/Nerd font detected)\n" "font"
+        FONT_INSTALLED=1
+    else
+        printf "  ${C_ERR}[MISS]${C_R}  %-14s (arrow glyphs will render broken; on macOS causes status bar to stack)\n" "font"
+        MISSING_HARD+=("powerline-font")
+        FONT_INSTALLED=0
+    fi
+    echo
+
+    # Optional requirements
+    echo -e "${C_B}Optional (theme degrades gracefully if missing):${C_R}"
+    for t in "${SOFT_TOOLS_COMMON[@]}"; do
+        check_tool "$t" || { printf "  ${C_WARN}[MISS]${C_R}  %-14s (optional)\n" "$t"; MISSING_SOFT+=("$t"); }
+    done
+    if [ "$OS_KIND" = "linux" ]; then
+        for t in "${SOFT_LINUX[@]}"; do
+            check_tool "$t" || { printf "  ${C_WARN}[MISS]${C_R}  %-14s (optional)\n" "$t"; MISSING_SOFT+=("$t"); }
+        done
+    elif [ "$OS_KIND" = "macos" ]; then
+        for t in "${SOFT_MACOS[@]}"; do
+            check_tool "$t" || { printf "  ${C_WARN}[MISS]${C_R}  %-14s (optional)\n" "$t"; MISSING_SOFT+=("$t"); }
+        done
+    fi
+    echo
+
+    # Platform data sources
+    echo -e "${C_B}Platform data sources:${C_R}"
+    if [ "$OS_KIND" = "linux" ]; then
+        check_file /proc/stat            "/proc/stat (cpu)"       || MISSING_HARD+=("/proc/stat")
+        check_file /proc/cpuinfo         "/proc/cpuinfo (cpu)"    || MISSING_HARD+=("/proc/cpuinfo")
+        check_file /sys/class/net        "/sys/class/net (net)"   || MISSING_HARD+=("/sys/class/net")
+        check_file /proc/net/route       "/proc/net/route (net)"  || true
+    elif [ "$OS_KIND" = "macos" ]; then
+        for t in vm_stat sysctl netstat route ipconfig ifconfig top; do
+            check_tool "$t" || MISSING_HARD+=("$t")
+        done
+    else
+        echo -e "  ${C_ERR}Unsupported OS.${C_R}"
+        MISSING_HARD+=("supported-os")
+    fi
+    echo
+    
+    # Recap/Summary
+    echo -e "${C_B}Summary:${C_R}"
+    if [ ${#MISSING_HARD[@]} -eq 0 ]; then
+        echo -e "  ${C_OK}All hard requirements satisfied.${C_R}"
+    else
+        echo -e "  ${C_ERR}Blockers:${C_R} ${MISSING_HARD[*]}"
+    fi
+    if [ ${#MISSING_SOFT[@]} -gt 0 ]; then
+        echo -e "  ${C_WARN}Optional missing:${C_R} ${MISSING_SOFT[*]}"
+    fi
+    echo
+}
+
+# Ask permission then install
+function maybe_install(){
+    local to_install=()
+    for t in "${MISSING_HARD[@]}" "${MISSING_SOFT[@]}"; do
+        # skip pseudo-entries that aren't packages (font handled separately)
+        case "$t" in /*|supported-os|powerline-font) continue ;; esac
+        local p; p=$(pkg_name_for "$t")
+        [ -n "$p" ] && to_install+=("$p")
+    done
+    # deduplicate
+    if [ ${#to_install[@]} -gt 0 ]; then
+        # shellcheck disable=SC2207
+        to_install=($(printf "%s\n" "${to_install[@]}" | awk '!seen[$0]++'))
+    fi
+
+    if [ ${#to_install[@]} -eq 0 ]; then
+        echo "Nothing to install."
+        return 0
+    fi
+    if [ -z "$PKG_INSTALL" ]; then
+        echo -e "${C_ERR}No supported package manager detected. Install manually:${C_R} ${to_install[*]}"
+        return 1
+    fi
+
+    echo -e "${C_B}Would run:${C_R} $PKG_INSTALL ${to_install[*]}"
+    printf "Proceed? [y/N] "
+    read -r reply
+    case "$reply" in
+        y|Y|yes|YES)
+            $PKG_INSTALL "${to_install[@]}"
+            ;;
+        *)
+            echo "Skipped."
+            ;;
+    esac
+}
+
+function install_requirements(){
+    run_check
+    maybe_install
+    # Font handled separately: package name / install command varies by OS
+    # (brew cask on mac, git-clone fallback on unsupported Linux).
+    if [ "$FONT_INSTALLED" -eq 0 ]; then
+        echo
+        echo -e "${C_B}Powerline/Nerd font missing.${C_R}"
+        printf "Install now? [y/N] "
+        read -r reply
+        case "$reply" in
+            y|Y|yes|YES) install_powerline_font ;;
+            *)           echo "Skipped font install." ;;
+        esac
+    fi
+}
+
+# Install ZSH with agnoster theme (Linux/apt only)
+function install_zsh_agnoster(){
+    detect_os
+    if [ "$PKG_MGR" != "apt" ]; then
+        echo -e "${C_ERR}zsh/agnoster automatic setup is apt-only. Install manually on this system.${C_R}"
+        return 1
+    fi
+    sudo apt-get -y install zsh
+
+    # fonts-powerline
+    git clone https://github.com/powerline/fonts.git --depth=1
+    cd fonts || return 1
+    ./install.sh
+    cd ..
+    rm -rf fonts
+
+    # Oh-my-zsh
+    sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+    chsh -s "$(which zsh)"
+
+    MY_THEME="agnoster"
+    MY_PLUGINS="git"
+    sed -e "s/ZSH_THEME=\"robbyrussell\"/ZSH_THEME=\"${MY_THEME}\"/g" -i "${HOME}/.zshrc"
+    sed -e "s/plugins=(git)/plugins=(${MY_PLUGINS})/g" -i "${HOME}/.zshrc"
+}
+
+#
+
+# Refuse to copy/link if hard requirements missing (unless --force)
+FORCE=0
+function enforce_ready(){
+    [ "$FORCE" -eq 1 ] && return 0
+    run_check >/dev/null
+    if [ "${#MISSING_HARD[@]}" -gt 0 ]; then
+        echo -e "${C_ERR}Refusing to install: missing hard requirements: ${MISSING_HARD[*]}${C_R}"
+        echo    "Re-run with --check for details, or --force to install anyway."
+        exit 1
+    fi
+}
+
+# If tmux files already exist, create a copy of them
+function bu_tmux(){
+    [ -e ${DES_TMUX} ] && mv ${DES_TMUX} ${DES_TMUX}.`date '+%d.%m.%Y_T%H-M%M-S%S'`.bu
+}
+
+function bu_functions(){
+    [ -e ${DES_SCRIPT} ] && mv ${DES_SCRIPT} ${DES_SCRIPT}.`date '+%d.%m.%Y_T%H-M%M-S%S'`.bu
+}
+
+function bu_files(){
+    bu_tmux
+    bu_functions
+}
+
+#
+
+function copy_tmux(){
+    enforce_ready
+    cp ${TAR_TMUX} ${DES_TMUX} && echo "Copy .tmux.conf file..."
+}
+
+function copy_functions(){
+    enforce_ready
+    cp ${TAR_SCRIPT} ${DES_SCRIPT} && echo "Copy .tmux-functions.sh file..."
+}
+
+function copy_files(){
+    copy_tmux
+    copy_functions
+}
+
+#
+
+function link_tmux(){
+    enforce_ready
+    [ ! -e ${DES_TMUX} ] && (echo -e "\nln -s ${TAR_TMUX} ${DES_TMUX}" && ln -s ${TAR_TMUX} ${DES_TMUX} && echo "Create symlink for .tmux.conf")
+}
+
+function link_functions(){
+    enforce_ready
+    [ ! -e ${DES_SCRIPT} ] && (echo -e "\nln -s ${TAR_SCRIPT} ${DES_SCRIPT}" && ln -s ${TAR_SCRIPT} ${DES_SCRIPT} && echo "Create symlink for .tmux-functions.sh")
+}
+
+function link_files(){
+    link_tmux
+    link_functions
+}
+
+function help_menu(){
     echo "Usage: $0 [Option] [Option] "
     echo "Install this custom made tmux theme to your system"
-    echo 
+    echo
     echo "Options:"
     echo "  -h, --help              show this help page"
     echo
-    echo "  -r, --requirements      install requirements"
+    echo "  -k, --check             probe target device for all required tools/features"
+    echo "  --force                 install even if hard requirements missing"
     echo
-    echo "  -z, --zsh               install also zsh with agnoster theme"
+    echo "  -r, --requirements      run --check then ask permission to install missing packages"
+    echo "                            (includes Powerline/Nerd font install if missing)"
+    echo "  -z, --zsh               install zsh with agnoster theme (Linux/apt only)"
     echo
-    echo "  -c, --copy-both         copy both needed files"
-    echo "  -l, --link-both         link both needed files"
+    echo "  -c, --copy-both         copy both needed files (blocked if requirements missing)"
+    echo "  -l, --link-both         link both needed files (blocked if requirements missing)"
     echo
     echo "  -t, --copy-tmux         only copy .tmux.conf"
     echo "  -T, --link-tmux         only link .tmux.conf"
@@ -41,86 +418,14 @@ help_menu(){
     echo "  -F, --link-functions    only link .tmux-functions.sh"
     echo
     echo "Notes:"
-    echo "  - I suggest for a normal installation to run with parameter -c."
-    echo
-    echo "  - If you want to regularly update status bar's content then you could"
-    echo "    copy .tmux.conf file and link .tmux-functions.sh with the one you"
-    echo "    have in your version control repo (in that case run -t -F)."
+    echo "  - Run '$0 --check' first on a new machine to confirm all deps are present."
+    echo "  - For a normal install: '$0 -r' then '$0 -c'."
+    echo "  - Works on Linux (apt/dnf/pacman/zypper/apk) and macOS (brew)."
 }
 
-# Install ZSH with agnoster theme
-install_zsh_agnoster(){
-    sudo apt-get -y install zsh
-    
-    # fonts-powerline
-    git clone https://github.com/powerline/fonts.git --depth=1
-    cd fonts
-    ./install.sh
-    cd ..
-    rm -rf fonts
+# MAIN
+detect_os
 
-    # Oh-my-zsh
-    sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
-    chsh -s $(which zsh)
-    
-    MY_THEME="agnoster"
-    MY_PLUGINS="git"
-    sed -e "s/ZSH_THEME=\"robbyrussell\"/ZSH_THEME=\"${MY_THEME}\"/g" -i ${HOME}/.zshrc
-    sed -e "s/plugins=(git)/plugins=(${MY_PLUGINS})/g" -i ${HOME}/.zshrc
-}
-
-# Install needed applications if not already been installed
-install_requirements(){ 
-    sudo apt-get -y install tmux dc bc psensor xclip
-}
-
-# ----
-
-# If tmux files already exist, create a copy of them
-bu_tmux(){ 
-    [ -e ${DES_TMUX} ] && mv ${DES_TMUX} ${DES_TMUX}.`date '+%d.%m.%Y_T%H-M%M-S%S'`.bu 
-}
-
-bu_functions(){ 
-    [ -e ${DES_SCRIPT} ] && mv ${DES_SCRIPT} ${DES_SCRIPT}.`date '+%d.%m.%Y_T%H-M%M-S%S'`.bu 
-}
-
-bu_files(){
-    bu_tmux
-    bu_functions
-}
-
-# ----
-
-copy_tmux(){ 
-    cp ${TAR_TMUX} ${DES_TMUX} && echo "Copy .tmux.conf file..." 
-}
-
-copy_functions(){ 
-    cp ${TAR_SCRIPT} ${DES_SCRIPT} && echo "Copy .tmux-functions.sh file..." 
-}
-
-copy_files(){
-    copy_tmux
-    copy_functions 
-}
-
-# ----
-
-link_tmux(){ 
-    [ ! -e ${DES_TMUX} ] && (echo -e "\nln -s ${TAR_TMUX} ${DES_TMUX}" && ln -s ${TAR_TMUX} ${DES_TMUX} && echo "Create symlink for .tmux.conf") 
-}
-
-link_functions(){ 
-    [ ! -e ${DES_SCRIPT} ] && (echo -e "\nln -s ${TAR_SCRIPT} ${DES_SCRIPT}" && ln -s ${TAR_SCRIPT} ${DES_SCRIPT} && echo "Create symlink for .tmux-functions.sh") 
-}
-
-link_files(){
-    link_tmux
-    link_functions  
-}
-
-#MAIN
 while :
 do
     case "$1" in
@@ -132,25 +437,27 @@ do
 
         -f | --copy-functions)  bu_functions ; copy_functions ; shift ;;
         -F | --link-functions)  bu_functions ; link_functions ; shift ;;
-        
+
+        -k | --check)           run_check ; shift ;;
+        --force)                FORCE=1 ; shift ;;
+
         -r | --requirements)    install_requirements  ; shift ;;
 
-	-z | --zsh)             install_zsh_agnoster ; shift ;;
+        -z | --zsh)             install_zsh_agnoster ; shift ;;
 
         -h | --help)            help_menu  ; exit 0 ;;
-        
+
         --*)
             echo "Unknown option: $1" >&2
-            helpMenu
+            help_menu
             exit 1
             ;;
         -*)
             echo "Unknown option: $1" >&2
-            helpMenu
-            exit 1 
+            help_menu
+            exit 1
             ;;
-        *) 
+        *)
             break
     esac
 done
-
