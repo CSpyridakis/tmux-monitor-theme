@@ -346,6 +346,36 @@ function enforce_ready(){
     fi
 }
 
+# Theme selection — keeps THEME= in sync across both installed files.
+# Must match the profile names in tmux-functions.sh's THEME case block.
+THEMES=(box_dark nord dracula mocha night original
+        catppuccin_latte solarized_light night_storm palenight material_ocean
+        horizon zenburn synthwave oxocarbon melange)
+SELECTED_THEME=""
+THEME_ASKED=0
+
+function choose_theme(){
+    [ "$THEME_ASKED" -eq 1 ] && return
+    THEME_ASKED=1
+    [ -t 0 ] || { SELECTED_THEME="${SELECTED_THEME:-original}"; return; }
+    echo -e "\n${C_B}Pick a theme:${C_R}"
+    local i=1 t
+    for t in "${THEMES[@]}"; do echo "  $i) $t"; i=$((i+1)); done
+    read -rp "Theme [1-${#THEMES[@]}] (default 1): " choice
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#THEMES[@]}" ]; then
+        SELECTED_THEME="${THEMES[$((choice-1))]}"
+    else
+        SELECTED_THEME="original"
+    fi
+    echo -e "${C_OK}Using theme: ${SELECTED_THEME}${C_R}\n"
+}
+
+function apply_theme(){
+    local file="$1"
+    [ -n "$SELECTED_THEME" ] && [ -e "$file" ] || return 0
+    sed -i.bak -e "s/^THEME=\".*\"/THEME=\"${SELECTED_THEME}\"/" "$file" && rm -f "${file}.bak"
+}
+
 # If tmux files already exist, create a copy of them
 function bu_tmux(){
     [ -e ${DES_TMUX} ] && mv ${DES_TMUX} ${DES_TMUX}.`date '+%d.%m.%Y_T%H-M%M-S%S'`.bu
@@ -364,12 +394,16 @@ function bu_files(){
 
 function copy_tmux(){
     enforce_ready
+    choose_theme
     cp ${TAR_TMUX} ${DES_TMUX} && echo "Copy .tmux.conf file..."
+    apply_theme "${DES_TMUX}"
 }
 
 function copy_functions(){
     enforce_ready
+    choose_theme
     cp ${TAR_SCRIPT} ${DES_SCRIPT} && echo "Copy .tmux-functions.sh file..."
+    apply_theme "${DES_SCRIPT}"
 }
 
 function copy_files(){
@@ -381,12 +415,18 @@ function copy_files(){
 
 function link_tmux(){
     enforce_ready
+    choose_theme
     [ ! -e ${DES_TMUX} ] && (echo -e "\nln -s ${TAR_TMUX} ${DES_TMUX}" && ln -s ${TAR_TMUX} ${DES_TMUX} && echo "Create symlink for .tmux.conf")
+    # symlinked, so the theme lives in the repo source file, not the link
+    apply_theme "${TAR_TMUX}"
 }
 
 function link_functions(){
     enforce_ready
+    choose_theme
     [ ! -e ${DES_SCRIPT} ] && (echo -e "\nln -s ${TAR_SCRIPT} ${DES_SCRIPT}" && ln -s ${TAR_SCRIPT} ${DES_SCRIPT} && echo "Create symlink for .tmux-functions.sh")
+    # symlinked, so the theme lives in the repo source file, not the link
+    apply_theme "${TAR_SCRIPT}"
 }
 
 function link_files(){
@@ -407,6 +447,9 @@ function help_menu(){
     echo "  -r, --requirements      run --check then ask permission to install missing packages"
     echo "                            (includes Powerline/Nerd font install if missing)"
     echo "  -z, --zsh               install zsh with agnoster theme (Linux/apt only)"
+    echo
+    echo "  -s, --theme THEME       set theme non-interactively, skips the prompt on copy/link"
+    echo "                            (${THEMES[*]})"
     echo
     echo "  -c, --copy-both         copy both needed files (blocked if requirements missing)"
     echo "  -l, --link-both         link both needed files (blocked if requirements missing)"
@@ -442,6 +485,15 @@ do
         --force)                FORCE=1 ; shift ;;
 
         -r | --requirements)    install_requirements  ; shift ;;
+
+        -s | --theme)
+            if [[ " ${THEMES[*]} " == *" $2 "* ]]; then
+                SELECTED_THEME="$2"; THEME_ASKED=1
+            else
+                echo -e "${C_ERR}Unknown theme: $2${C_R} (choices: ${THEMES[*]})" >&2
+                exit 1
+            fi
+            shift 2 ;;
 
         -z | --zsh)             install_zsh_agnoster ; shift ;;
 

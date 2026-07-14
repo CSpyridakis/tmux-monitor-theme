@@ -12,21 +12,175 @@
 ####################################################################################################################
 
 # ============================================================================
-#  PALETTE — 256-color family, modernized. Dark gray base + soft bright blue
-#  accent + spectrum thresholds. Same family as before, slightly warmer/softer.
+#  PALETTE — pick a profile below. True hex, tmux downsamples to 256-color
+#  automatically on terminals without RGB support.
+#  Options: box_dark | nord | dracula | mocha |
+#           night | original | forest_dark | rose | kanagawa |
+#           solarized_dark | box_light | one_dark | monokai_pro | ayu_dark |
+#           light | night_owl | catppuccin_latte | solarized_light |
+#           night_storm | palenight | material_ocean | horizon | zenburn |
+#           synthwave | oxocarbon | melange
 # ============================================================================
-BG="colour235"        # #262626 — status bar base (original)
-SURFACE="colour237"   # #3a3a3a — segment surface (original)
-FG="colour231"        # #ffffff — primary text (pure white)
-SUBFG="colour251"     # #c6c6c6 — secondary text (more legible)
-ACCENT="colour39"     # #00afff — crisp electric blue (session/host bookends)
-ACCENT_FG="colour232" # #080808 — near-black text sitting on accent
-GOOD="colour41"       # #00d75f — punchy green (low load / cool temp / low usage)
-COOL="colour51"       # #00ffff — vivid cyan (net widget)
-WARN="colour220"      # #ffd700 — sharp gold (rising)
-WARN2="colour208"     # #ff8700 — sharp orange (high)
-DANGER="colour196"    # #ff0000 — bold red (critical)
-MUTED="colour244"     # #808080 — gray placeholder ("--")
+THEME="original"
+
+case "$THEME" in
+    nord)
+        BG="#2e3440"; SURFACE="#3b4252"; FG="#eceff4"; SUBFG="#d8dee9"
+        ACCENT="#88c0d0"; ACCENT_FG="#2e3440"
+        GOOD="#a3be8c"; COOL="#8fbcbb"; WARN="#ebcb8b"; WARN2="#d08770"
+        DANGER="#bf616a"; MUTED="#4c566a"
+        ;;
+    dracula)
+        BG="#282a36"; SURFACE="#44475a"; FG="#f8f8f2"; SUBFG="#6272a4"
+        ACCENT="#bd93f9"; ACCENT_FG="#282a36"
+        GOOD="#50fa7b"; COOL="#8be9fd"; WARN="#f1fa8c"; WARN2="#ffb86c"
+        DANGER="#ff5555"; MUTED="#6272a4"
+        ;;
+    mocha)
+        BG="#1e1e2e"; SURFACE="#313244"; FG="#cdd6f4"; SUBFG="#bac2de"
+        ACCENT="#89b4fa"; ACCENT_FG="#1e1e2e"
+        GOOD="#a6e3a1"; COOL="#94e2d5"; WARN="#f9e2af"; WARN2="#fab387"
+        DANGER="#f38ba8"; MUTED="#6c7086"
+        ;;
+    night)
+        BG="#1a1b26"; SURFACE="#292e42"; FG="#c0caf5"; SUBFG="#a9b1d6"
+        ACCENT="#7aa2f7"; ACCENT_FG="#1a1b26"
+        GOOD="#9ece6a"; COOL="#7dcfff"; WARN="#e0af68"; WARN2="#ff9e64"
+        DANGER="#f7768e"; MUTED="#565f89"
+        ;;
+    original)
+        BG="#262626"; SURFACE="#3a3a3a"; FG="#ffffff"; SUBFG="#c6c6c6"
+        ACCENT="#00afff"; ACCENT_FG="#080808"
+        GOOD="#00d75f"; COOL="#00ffff"; WARN="#ffd700"; WARN2="#ff8700"
+        DANGER="#ff0000"; MUTED="#808080"
+        ;;
+    forest_dark)
+        BG="#2d353b"; SURFACE="#343f44"; FG="#d3c6aa"; SUBFG="#9da9a0"
+        ACCENT="#83c092"; ACCENT_FG="#2d353b"
+        GOOD="#a7c080"; COOL="#7fbbb3"; WARN="#dbbc7f"; WARN2="#e69875"
+        DANGER="#e67e80"; MUTED="#859289"
+        ;;
+    rose)
+        BG="#191724"; SURFACE="#26233a"; FG="#e0def4"; SUBFG="#908caa"
+        ACCENT="#c4a7e7"; ACCENT_FG="#191724"
+        GOOD="#9ccfd8"; COOL="#31748f"; WARN="#f6c177"; WARN2="#ebbcba"
+        DANGER="#eb6f92"; MUTED="#6e6a86"
+        ;;
+    kanagawa)
+        BG="#1f1f28"; SURFACE="#2a2a37"; FG="#dcd7ba"; SUBFG="#a3a0a8"
+        ACCENT="#7e9cd8"; ACCENT_FG="#1f1f28"
+        GOOD="#98bb6c"; COOL="#7aa89f"; WARN="#e6c384"; WARN2="#ffa066"
+        DANGER="#ff5d62"; MUTED="#727169"
+        ;;
+    solarized_dark)
+        BG="#002b36"; SURFACE="#073642"; FG="#93a1a1"; SUBFG="#839496"
+        ACCENT="#268bd2"; ACCENT_FG="#002b36"
+        GOOD="#859900"; COOL="#2aa198"; WARN="#b58900"; WARN2="#cb4b16"
+        DANGER="#dc322f"; MUTED="#586e75"
+        ;;
+    box_light)
+        BG="#fbf1c7"; SURFACE="#ebdbb2"; FG="#3c3836"; SUBFG="#504945"
+        ACCENT="#076678"; ACCENT_FG="#fbf1c7"
+        GOOD="#79740e"; COOL="#427b58"; WARN="#b57614"; WARN2="#af3a03"
+        DANGER="#9d0006"; MUTED="#7c6f64"
+        ;;
+    one_dark)
+        BG="#282c34"; SURFACE="#3b4048"; FG="#abb2bf"; SUBFG="#9299a6"
+        ACCENT="#61afef"; ACCENT_FG="#282c34"
+        GOOD="#98c379"; COOL="#56b6c2"; WARN="#e5c07b"; WARN2="#d19a66"
+        DANGER="#e06c75"; MUTED="#5c6370"
+        ;;
+    monokai_pro)
+        BG="#2d2a2e"; SURFACE="#403e41"; FG="#fcfcfa"; SUBFG="#c1c0c0"
+        ACCENT="#ab9df2"; ACCENT_FG="#2d2a2e"
+        GOOD="#a9dc76"; COOL="#78dce8"; WARN="#ffd866"; WARN2="#fc9867"
+        DANGER="#ff6188"; MUTED="#727072"
+        ;;
+    ayu_dark)
+        BG="#0a0e14"; SURFACE="#1f2430"; FG="#b3b1ad"; SUBFG="#8a8986"
+        ACCENT="#ffb454"; ACCENT_FG="#0a0e14"
+        GOOD="#c2d94c"; COOL="#95e6cb"; WARN="#ffb454"; WARN2="#ff8f40"
+        DANGER="#f07178"; MUTED="#4d5566"
+        ;;
+    light)
+        BG="#ffffff"; SURFACE="#eaeef2"; FG="#24292f"; SUBFG="#424a53"
+        ACCENT="#0969da"; ACCENT_FG="#ffffff"
+        GOOD="#1a7f37"; COOL="#1b7c83"; WARN="#9a6700"; WARN2="#bc4c00"
+        DANGER="#cf222e"; MUTED="#57606a"
+        ;;
+    night_owl)
+        BG="#011627"; SURFACE="#0b2942"; FG="#d6deeb"; SUBFG="#8badc1"
+        ACCENT="#82aaff"; ACCENT_FG="#011627"
+        GOOD="#addb67"; COOL="#7fdbca"; WARN="#ffeb95"; WARN2="#f78c6c"
+        DANGER="#ef5350"; MUTED="#637777"
+        ;;
+    catppuccin_latte)
+        BG="#eff1f5"; SURFACE="#ccd0da"; FG="#4c4f69"; SUBFG="#5c5f77"
+        ACCENT="#1e66f5"; ACCENT_FG="#eff1f5"
+        GOOD="#40a02b"; COOL="#179299"; WARN="#df8e1d"; WARN2="#fe640b"
+        DANGER="#d20f39"; MUTED="#9ca0b0"
+        ;;
+    solarized_light)
+        BG="#fdf6e3"; SURFACE="#eee8d5"; FG="#586e75"; SUBFG="#657b83"
+        ACCENT="#268bd2"; ACCENT_FG="#fdf6e3"
+        GOOD="#859900"; COOL="#2aa198"; WARN="#b58900"; WARN2="#cb4b16"
+        DANGER="#dc322f"; MUTED="#93a1a1"
+        ;;
+    night_storm)
+        BG="#24283b"; SURFACE="#2f334d"; FG="#c0caf5"; SUBFG="#a9b1d6"
+        ACCENT="#7aa2f7"; ACCENT_FG="#24283b"
+        GOOD="#9ece6a"; COOL="#7dcfff"; WARN="#e0af68"; WARN2="#ff9e64"
+        DANGER="#f7768e"; MUTED="#565f89"
+        ;;
+    palenight)
+        BG="#292d3e"; SURFACE="#3a3f58"; FG="#a6accd"; SUBFG="#8f93a8"
+        ACCENT="#c792ea"; ACCENT_FG="#292d3e"
+        GOOD="#c3e88d"; COOL="#89ddff"; WARN="#ffcb6b"; WARN2="#f78c6c"
+        DANGER="#ff5370"; MUTED="#676e95"
+        ;;
+    material_ocean)
+        BG="#0f111a"; SURFACE="#1f2233"; FG="#a6accd"; SUBFG="#8f93a8"
+        ACCENT="#82aaff"; ACCENT_FG="#0f111a"
+        GOOD="#c3e88d"; COOL="#89ddff"; WARN="#ffcb6b"; WARN2="#f78c6c"
+        DANGER="#ff5370"; MUTED="#464b5d"
+        ;;
+    horizon)
+        BG="#1c1e26"; SURFACE="#2e303e"; FG="#d5d8da"; SUBFG="#b0b3b8"
+        ACCENT="#e95678"; ACCENT_FG="#1c1e26"
+        GOOD="#29d398"; COOL="#59e1e3"; WARN="#fab795"; WARN2="#f09383"
+        DANGER="#f43e5c"; MUTED="#6c6f93"
+        ;;
+    zenburn)
+        BG="#3f3f3f"; SURFACE="#4f4f4f"; FG="#dcdccc"; SUBFG="#c0c0b0"
+        ACCENT="#8cd0d3"; ACCENT_FG="#2b2b2b"
+        GOOD="#7f9f7f"; COOL="#93e0e3"; WARN="#f0dfaf"; WARN2="#dfaf8f"
+        DANGER="#cc9393"; MUTED="#709080"
+        ;;
+    synthwave)
+        BG="#262335"; SURFACE="#34294f"; FG="#f0eff1"; SUBFG="#b6b1c8"
+        ACCENT="#ff7edb"; ACCENT_FG="#262335"
+        GOOD="#72f1b8"; COOL="#36f9f6"; WARN="#fede5d"; WARN2="#ff8b39"
+        DANGER="#fe4450"; MUTED="#848bbd"
+        ;;
+    oxocarbon)
+        BG="#161616"; SURFACE="#262626"; FG="#f2f4f8"; SUBFG="#c6c6c6"
+        ACCENT="#78a9ff"; ACCENT_FG="#161616"
+        GOOD="#42be65"; COOL="#3ddbd9"; WARN="#d2a106"; WARN2="#ff832b"
+        DANGER="#ee5396"; MUTED="#525252"
+        ;;
+    melange)
+        BG="#292522"; SURFACE="#34302c"; FG="#ece1d7"; SUBFG="#c1a78e"
+        ACCENT="#89b3b6"; ACCENT_FG="#292522"
+        GOOD="#85b695"; COOL="#7d9b9e"; WARN="#ebc06d"; WARN2="#d9a072"
+        DANGER="#d47766"; MUTED="#867462"
+        ;;
+    box_dark|*)
+        BG="#282828"; SURFACE="#3c3836"; FG="#d4be98"; SUBFG="#a89984"
+        ACCENT="#7daea3"; ACCENT_FG="#1d2021"
+        GOOD="#a9b665"; COOL="#89b482"; WARN="#d8a657"; WARN2="#e78a4e"
+        DANGER="#ea6962"; MUTED="#928374"
+        ;;
+esac
 
 # Aliases kept for backward-compat with status bar helpers
 THEME_CLR="${ACCENT}"
